@@ -13,7 +13,7 @@ taskRouter.get('/tasks/user/:userId', new TaskController().listTasksByUserId);
 taskRouter.get('/tasks/:userId/date-range', new TaskController().listTasksByDateInterval);
 // lista tarefas criadas hoje
 taskRouter.get('/tasks/:userId/today', new TaskController().listTasksToday);
-// lista tarefas da última semana
+// lista tarefas criadas na última semana
 taskRouter.get('/tasks/:userId/last-week', new TaskController().listTasksLastWeek);
 // lista tarefas pendentes
 taskRouter.get('/tasks/:userId/pending', new TaskController().listTasksPending);
