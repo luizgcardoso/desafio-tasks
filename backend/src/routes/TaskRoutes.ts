@@ -10,10 +10,15 @@ taskRouter.get('/tasks', new TaskController().listTasks);
 taskRouter.get('/tasks/:id', new TaskController().listTaskById);
 taskRouter.get('/tasks/user/:userId', new TaskController().listTasksByUserId);
 // lista tarefas por intervalo de datas
-taskRouter.get('/tasks/date-range', new TaskController().listTasksByDateInterval);
+taskRouter.get('/tasks/:userId/date-range', new TaskController().listTasksByDateInterval);
+// lista tarefas criadas hoje
+taskRouter.get('/tasks/:userId/today', new TaskController().listTasksToday);
+// lista tarefas da última semana
+taskRouter.get('/tasks/:userId/last-week', new TaskController().listTasksLastWeek);
+// lista tarefas pendentes
+taskRouter.get('/tasks/:userId/pending', new TaskController().listTasksPending);
 
 taskRouter.put('/tasks/:id', new TaskController().updateTask);
-
 taskRouter.delete('/tasks/:id', new TaskController().deleteTask);
 
 
