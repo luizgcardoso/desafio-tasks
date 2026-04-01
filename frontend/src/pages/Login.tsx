@@ -1,14 +1,15 @@
-import Button from "../components/Button";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import AppRoutes from '../routes/AppRoutes';
+import AuthContext from '../context/AuthContext';
 
-export default function Login() {
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <h1 className="text-4xl font-bold">Login</h1>
-      <form action="/login" method="POST" className="flex flex-col gap-4 mt-4">
-        <input type="text" placeholder="Username" />
-        <input type="password" placeholder="Password" />
-        <Button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" text="Sign in" type="submit" />
-      </form>
-    </div>
-  );
+
+export default function Login() {   
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AuthContext.Provider value={{ user: null, login: async () => {}, logout: () => {}, isAuthenticated: false }}>
+      <AppRoutes />
+    </AuthContext.Provider>
+  </StrictMode>
+);
 }
