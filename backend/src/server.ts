@@ -1,22 +1,30 @@
 import express from 'express';
-import { AppDataSource } from './database/data-source';
-import { taskRouter } from './routes/taskRoutes';
-import { userRouter } from './routes/userRoutes';
+import cors from 'cors';
 
+import { AppDataSource } from './database/data-source';
+import { taskRouter } from './routes/TaskRoutes';
+import { userRouter } from './routes/UserRoutes';
+import { Task } from './entities/Task';
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+app.use(taskRouter);
+app.use(userRouter);
+
+app.get('/', (req, res) => {
+  console.log('Servidor rodando com Express!');
+  return res.send('Servidor rodando com Express!');
+});
 
 AppDataSource.initialize()
   .then(() => {
-    const app = express();
-    app.use(express.json());
-    app.use(taskRouter, userRouter);
-
-    app.get('/', (req, res) => {
-      return res.send('Servidor rodando com Express!');
-      console.log('Servidor rodando com Express!');
+    app.listen(process.env.PORT || 3000, () => {
+      console.log('Servidor iniciado!');
     });
-    return app.listen(process.env.PORT);
   })
   .catch((err) => {
-    console.error('Erro', err);
+    console.error('Erro ao conectar no banco:', err);
   });
-
