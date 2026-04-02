@@ -5,6 +5,7 @@ import { AppDataSource } from './database/data-source';
 import { taskRouter } from './routes/TaskRoutes';
 import { userRouter } from './routes/UserRoutes';
 import { Task } from './entities/Task';
+<<<<<<< HEAD
 // import AuthRoutes from './routes/AuthRoutes';
 // import authMiddleware from './middleware/AuthMiddleware';
 
@@ -28,6 +29,17 @@ app.use(cors({
 app.use(express.json());
 // app.use(AuthRoutes);
 // app.use(authMiddleware);
+=======
+import AuthRoutes from './routes/AuthRoutes';
+import authMiddleware from './middleware/authMiddleware';
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(AuthRoutes);
+app.use(authMiddleware);
+>>>>>>> 469b5fb5a5d0f9591f36de8969ccee637f1fcc50
 app.use(taskRouter);
 app.use(userRouter);
 
