@@ -1,10 +1,11 @@
+
 import Router from 'express';
 
 import { TaskController } from '../controllers/TaskController';
 
 const taskRouter = Router();
 
-taskRouter.post('/tasks/:userId', new TaskController().createTask);
+taskRouter.post('/tasks/create/:userId', new TaskController().createTask);
 
 taskRouter.get('/tasks', new TaskController().listTasks);
 taskRouter.get('/tasks/:id', new TaskController().listTaskById);

@@ -9,6 +9,7 @@
     "build": "tsc",
     "migration:generate": "typeorm-ts-node-commonjs -d ./src/database/data-source.ts migration:generate ./src/database/migrations/default",
     "migration:run": "typeorm-ts-node-commonjs -d ./src/database/data-source.ts migration:run",
+    "migration:run": "typeorm-ts-node-commonjs -d ./src/database/data-source.ts migration:run",
     "migration:revert": "typeorm-ts-node-commonjs -d ./src/database/data-source.ts migration:revert"
   },
   "keywords": [],
@@ -16,11 +17,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-<<<<<<< HEAD
-=======
-    "axios": "^1.14.0",
-    "bcryptjs": "^3.0.3",
->>>>>>> 469b5fb5a5d0f9591f36de8969ccee637f1fcc50
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
@@ -30,11 +26,6 @@
     "typeorm": "^0.3.28"
   },
   "devDependencies": {
-<<<<<<< HEAD
-=======
-    "@types/axios": "^0.9.36",
-    "@types/bcryptjs": "^2.4.6",
->>>>>>> 469b5fb5a5d0f9591f36de8969ccee637f1fcc50
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",

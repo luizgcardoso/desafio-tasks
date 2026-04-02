@@ -11,7 +11,7 @@ interface Task {
 }
 
 const API_BASE = 'http://localhost:3000';
-const USER_ID = 6; // ⚠️ Altere para o ID do seu usuário
+const USER_ID = 4; // ⚠️ Altere para o ID do seu usuário
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -46,7 +46,7 @@ export default function App() {
     if (!newTitle.trim()) return;
 
     try {
-      const res = await fetch(`${API_BASE}/tasks/${USER_ID}`, {
+      const res = await fetch(`${API_BASE}/tasks/create/${USER_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -161,8 +161,7 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center p-4">
       <div className="bg-white shadow-2xl rounded-3xl p-8 w-full max-w-2xl">
         <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">To-Do List</h1>
-        <h3 className="text-center text-lg font-semibold text-gray-600 mb-8">ADICIONAR NOVA TAREFA</h3>
-
+        <h3 className="mt-5 p-2 text-center text-lg font-semibold text-gray-600 mb-8">ADICIONAR NOVA TAREFA:</h3>
         {/* Formulário Nova Tarefa */}
         <div className="mb-10 border border-gray-200 rounded-3xl overflow-hidden">
           <div
@@ -232,7 +231,7 @@ export default function App() {
                     onClick={() => toggleExpand(task.id)}
                     className="ml-2 px-4 py-1 text-gray-500 hover:text-gray-700 text-xl transition"
                   >
-                    {isExpanded ? 'Resumir' : 'Detalhar'}
+                    {isExpanded ? '▲ Resumir' : '▼ Detalhar'}
                   </button>
 
                   <button
@@ -278,7 +277,7 @@ export default function App() {
                           onClick={() => startEdit(task)}
                           className="mt-6 w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-2xl font-medium transition"
                         >
-                          Editar Tarefa
+                        Editar Tarefa
                         </button>
                       </div>
                     )}
@@ -292,30 +291,3 @@ export default function App() {
     </div>
   );
 }
-=======
-
-import AppRoutes from "./routes/AppRoutes";
-
-function App() {
-  // const [refresh, setRefresh] = useState(false);
-
-  // function reload() {
-  //   setRefresh(!refresh);
-  // }
-  return (
-    // <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-    //   <div className="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg">
-    //     <h1 className="text-3xl font-bold mb-4 text-center">
-    //       Minhas tarefas
-    //     </h1>
-       
-    //     <TaskForm onTaskCreated={reload} />
-    //     <TaskList refresh={refresh} />
-    //   </div>
-    // </div>
-    <AppRoutes />
-  );
-}
-
-export default App;
->>>>>>> 469b5fb5a5d0f9591f36de8969ccee637f1fcc50

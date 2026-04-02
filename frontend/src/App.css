@@ -1,17 +1,1 @@
-<<<<<<< HEAD
 @import "tailwindcss";
-=======
-*{
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  background-color: #fff;
-  color: black;
-}
-
-h1{
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  color: black;
-} 
->>>>>>> 469b5fb5a5d0f9591f36de8969ccee637f1fcc50
