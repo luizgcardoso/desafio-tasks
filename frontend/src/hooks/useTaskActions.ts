@@ -1,4 +1,3 @@
-// src/hooks/useTaskActions.ts
 import { useState } from 'react';
 import api from '../services/api';
 
@@ -64,9 +63,7 @@ export const useTaskActions = (userId: number | undefined, fetchTasks: () => Pro
       'em-andamento': 'concluido',
       concluido: 'pendente',
     };
-
     const newStatus = statusOrder[task.status] || 'pendente';
-
     let started_at = task.started_at;
     let finished_at = task.finished_at;
 
@@ -101,6 +98,6 @@ export const useTaskActions = (userId: number | undefined, fetchTasks: () => Pro
     setEditTitle,
     setEditDescription,
     setEditStatus,
-    cancelEdit,           // ← Adicionado aqui
+    cancelEdit,
   };
 };

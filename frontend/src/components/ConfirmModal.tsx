@@ -21,7 +21,7 @@ export default function ConfirmModal({
   cancelText = "Cancelar",
   isDanger = true,
 }: ConfirmModalProps) {
-  // Fechar com ESC
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -35,17 +35,12 @@ export default function ConfirmModal({
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
-        {/* Header */}
         <div className="p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-800">{title}</h2>
         </div>
-
-        {/* Corpo */}
         <div className="p-6">
           <p className="text-gray-600 leading-relaxed">{message}</p>
         </div>
-
-        {/* Botões */}
         <div className="flex border-t">
           <button
             onClick={onClose}

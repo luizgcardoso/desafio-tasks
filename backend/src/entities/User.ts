@@ -21,10 +21,7 @@ export class User {
 
     @DeleteDateColumn({ type: "timestamp", nullable: true })
     deleted_at: Date | null
-    /*
-        @Column({ type: "text", nullable: true, default: "ativo" })
-        status: string
-    */
+
     @OneToMany(() => Task, task => task.user)
     tasks: Task[]
 

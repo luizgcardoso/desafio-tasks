@@ -1,4 +1,3 @@
-// src/services/api.ts
 import axios from 'axios';
 
 const api = axios.create({
@@ -6,7 +5,6 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Adiciona token automaticamente em todas as requisições
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,7 +16,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Redireciona para login se token expirar/inválido
 api.interceptors.response.use(
   (response) => response,
   (error) => {

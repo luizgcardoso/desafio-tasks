@@ -1,4 +1,3 @@
-// src/components/TaskItem.tsx
 interface Task {
   id: number;
   title: string;
@@ -53,21 +52,18 @@ export default function TaskItem({
           onChange={() => onToggleStatus(task)}
           className="w-6 h-6 accent-blue-600 cursor-pointer"
         />
-
         <div className="ml-4 flex-1">
           <h2 className={`text-lg font-semibold ${task.status === 'concluido' ? 'line-through text-gray-500' : 'text-gray-800'}`}>
             {task.title}
           </h2>
           <p className="text-sm text-gray-500 capitalize">{task.status.replace('-', ' ')}</p>
         </div>
-
         <button
           onClick={() => onToggleExpand(task.id)}
           className="ml-2 px-4 py-1 text-gray-500 hover:text-gray-700 text-xl transition"
         >
           {isExpanded ? '▲ Resumir' : '▼ Detalhar'}
         </button>
-
         <button
           onClick={() => onDelete(task.id, task.title)}
           className="ml-4 px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-2xl transition"
@@ -101,7 +97,6 @@ export default function TaskItem({
                 <option value="em-andamento">Em andamento</option>
                 <option value="concluido">Concluída</option>
               </select>
-
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => onSaveEdit(task.id)}
@@ -129,7 +124,6 @@ export default function TaskItem({
                   <strong>Concluída em:</strong> {new Date(task.finished_at).toLocaleString('pt-BR')}
                 </p>
               )}
-
               <button
                 onClick={() => onStartEdit(task)}
                 className="mt-6 w-full bg-amber-500 hover:bg-amber-600 text-white py-3 rounded-2xl font-medium transition"

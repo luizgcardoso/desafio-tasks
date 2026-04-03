@@ -1,4 +1,3 @@
-// src/components/NewTaskForm.tsx
 import { useState } from 'react';
 
 interface NewTaskFormProps {
@@ -31,7 +30,6 @@ export default function NewTaskForm({
       setFormError('A descrição da tarefa é obrigatória.');
       return;
     }
-
     setFormError('');
     onAddTask();
   };
@@ -56,7 +54,6 @@ export default function NewTaskForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
           <div>
             <textarea
               placeholder="Descrição da tarefa *"
@@ -65,11 +62,9 @@ export default function NewTaskForm({
               className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-28 resize-y"
             />
           </div>
-
           {formError && (
             <p className="text-red-500 text-sm font-medium">{formError}</p>
           )}
-
           <button
             onClick={handleCreate}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-semibold transition"

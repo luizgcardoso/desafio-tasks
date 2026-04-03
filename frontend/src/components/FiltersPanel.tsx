@@ -1,4 +1,3 @@
-// src/components/FiltersPanel.tsx
 interface FiltersPanelProps {
   reportType: 'all' | 'today' | 'week' | 'custom';
   setReportType: (type: 'all' | 'today' | 'week' | 'custom') => void;
@@ -37,8 +36,6 @@ export default function FiltersPanel({
           Limpar tudo
         </button>
       </div>
-
-      {/* Botões de Relatório Rápido */}
       <div className="flex flex-wrap gap-3 mb-6">
         
         <button
@@ -66,8 +63,6 @@ export default function FiltersPanel({
           Período Customizado
         </button>
       </div>
-
-      {/* Busca + Status */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <input
           type="text"
@@ -76,7 +71,6 @@ export default function FiltersPanel({
           onChange={(e) => setSearch(e.target.value)}
           className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -88,8 +82,6 @@ export default function FiltersPanel({
           <option value="concluido">Concluída</option>
         </select>
       </div>
-
-      {/* Filtro por Data Customizado */}
       {reportType === 'custom' && (
         <div className="bg-gray-50 p-5 rounded-2xl border border-gray-200">
           <p className="text-sm font-medium text-gray-700 mb-3">Filtrar por Período Específico</p>

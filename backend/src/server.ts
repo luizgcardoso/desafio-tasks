@@ -1,6 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-
 import { AppDataSource } from './database/data-source';
 import { taskRouter } from './routes/TaskRoutes';
 import { userRouter } from './routes/UserRoutes';

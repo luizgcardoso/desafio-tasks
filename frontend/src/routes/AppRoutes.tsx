@@ -1,4 +1,3 @@
-// src/routes/AppRoutes.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../components/Login';
 import Register from '../components/Register';
@@ -10,7 +9,6 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
       <Route
         path="/tasks"
         element={
@@ -19,8 +17,6 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
-
-      {/* Redireciona qualquer rota inválida para login */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
