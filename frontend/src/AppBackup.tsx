@@ -11,7 +11,7 @@ interface Task {
 }
 
 const API_BASE = 'http://localhost:3000';
-const USER_ID = 4; // ⚠️ Altere para o ID do seu usuário
+const USER_ID = 6; // ⚠️ Altere para o ID do seu usuário
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -43,7 +43,7 @@ export default function App() {
 
   // ====================== ADICIONAR TAREFA ======================
   const handleAddTask = async () => {
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || !newDescription.trim()) return alert('Título e descrição são obrigatórios');
 
     try {
       const res = await fetch(`${API_BASE}/tasks/create/${USER_ID}`, {
@@ -51,7 +51,8 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newTitle.trim(),
-          description: newDescription.trim() || '',
+          description: newDescription.trim(),
+          // description: newDescription.trim() || '',
         }),
       });
 
@@ -74,11 +75,14 @@ export default function App() {
       'em-andamento': 'concluido',
       concluido: 'pendente',
     };
-
     const newStatus = statusOrder[task.status] || 'pendente';
+
+    let started_at: string | null = task.started_at;
     let finished_at: string | null = task.finished_at;
 
-    if (newStatus === 'concluido') {
+    if (newStatus === 'em-andamento' && !started_at) {
+      started_at = new Date().toISOString();
+    } else if (newStatus === 'concluido') {
       finished_at = new Date().toISOString();
     } else {
       finished_at = null;
@@ -92,12 +96,13 @@ export default function App() {
           title: task.title,
           description: task.description,
           status: newStatus,
-          finished_at,           // ← Enviando a data
+          started_at,
+          finished_at,
         }),
       });
 
       setTasks(tasks.map(t =>
-        t.id === task.id ? { ...t, status: newStatus, finished_at } : t
+        t.id === task.id ? { ...t, status: newStatus, started_at, finished_at } : t
       ));
     } catch (err) {
       alert('Erro ao atualizar status');

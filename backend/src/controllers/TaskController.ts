@@ -59,10 +59,6 @@ export class TaskController {
         return res.status(404).json({ message: "User not found" });
       }
       const tasks = await taskRepository.find({
-        /* 
-        refatorar/testar
-        where:{user}
-        */
         where: {
           user: { id: Number(userId) }
         },
@@ -206,17 +202,28 @@ export class TaskController {
 
 
   async updateTask(req: Request, res: Response) {
-    const { title, description, status } = req.body;
+    const { title, description, status, started_at, finished_at } = req.body;
     const { id } = req.params;
+
     try {
       const task = await taskRepository.findOneBy({ id: Number(id) });
+
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
+
       task.title = String(title);
       task.description = String(description);
       task.status = String(status);
+
+      if (started_at) {
+        task.started_at = new Date(started_at);
+      }
+
+      task.finished_at = finished_at ? new Date(finished_at) : null;
+
       await taskRepository.save(task);
+
       return res.status(200).json({ message: "Task updated successfully" });
 
     } catch (error) {

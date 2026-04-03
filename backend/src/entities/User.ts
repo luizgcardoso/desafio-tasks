@@ -20,7 +20,7 @@ export class User {
     created_at: Date
 
     @DeleteDateColumn({ type: "timestamp", nullable: true })
-    deleted_at: Date
+    deleted_at: Date | null
     /*
         @Column({ type: "text", nullable: true, default: "ativo" })
         status: string
