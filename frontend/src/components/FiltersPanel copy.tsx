@@ -10,7 +10,7 @@ interface FiltersPanelProps {
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
-  onClearFilters: () => void;   // ← Mantido para o botão "Limpar tudo"
+  onApplyFilter: () => void;        // mantido por compatibilidade, mas vamos usar melhor
 }
 
 export default function FiltersPanel({
@@ -24,15 +24,23 @@ export default function FiltersPanel({
   setStartDate,
   endDate,
   setEndDate,
-  onClearFilters,
 }: FiltersPanelProps) {
+
+  const clearAllFilters = () => {
+    setReportType('all');
+    setSearch('');
+    setStatusFilter('');
+    setStartDate('');
+    setEndDate('');
+  };
+
   return (
     <div className="bg-white rounded-3xl shadow p-6 mb-8">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Filtros e Relatórios</h2>
         <button
-          onClick={onClearFilters}
-          className="text-sm px-4 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition"
+          onClick={clearAllFilters}
+          className="text-sm text-gray-500 hover:text-red-600 transition"
         >
           Limpar tudo
         </button>
@@ -40,7 +48,14 @@ export default function FiltersPanel({
 
       {/* Botões de Relatório Rápido */}
       <div className="flex flex-wrap gap-3 mb-6">
-        
+        {/* <button
+          onClick={() => setReportType('all')}
+          className={`px-6 py-3 rounded-2xl font-medium transition ${
+            reportType === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
+          }`}
+        >
+          Todas as Tarefas
+        </button> */}
         <button
           onClick={() => setReportType('today')}
           className={`px-6 py-3 rounded-2xl font-medium transition ${

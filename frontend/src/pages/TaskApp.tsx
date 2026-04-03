@@ -1,5 +1,6 @@
 // src/pages/TaskApp.tsx
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import FiltersPanel from '../components/FiltersPanel';
 import NewTaskForm from '../components/NewTaskForm';
@@ -7,6 +8,8 @@ import TaskItem from '../components/TaskItem';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
+import { useTaskFilters } from '../hooks/useTaskFilters';
+import { useTaskActions } from '../hooks/useTaskActions';
 
 interface Task {
   id: number;
@@ -19,47 +22,43 @@ interface Task {
 }
 
 export default function TaskApp() {
+  const { user } = useAuth();
+  const { userId: paramUserId } = useParams<{ userId: string }>();
+  const effectiveUserId = Number(paramUserId) || user?.id;
+
+  // Hooks
+  const filters = useTaskFilters();
   const [tasks, setTasks] = useState<Task[]>([]);
+
+  // Estados locais
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [isNewFormExpanded, setIsNewFormExpanded] = useState(false);
-
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [reportType, setReportType] = useState<'all' | 'today' | 'week' | 'custom'>('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  const [expandedTasks, setExpandedTasks] = useState<Set<number>>(new Set());
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
-  const [editStatus, setEditStatus] = useState('');
 
   // Estados do Modal de Confirmação
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
   const [taskTitleToDelete, setTaskTitleToDelete] = useState('');
+
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  const { user } = useAuth();
 
   // ====================== BUSCAR TAREFAS ======================
   const fetchTasks = async () => {
-    if (!user?.id) return;
+    if (!effectiveUserId) return;
 
     try {
-      let url = `/tasks/user/${user.id}`;
+      let url = `/tasks/user/${effectiveUserId}`;
 
-      if (reportType === 'today') {
+      if (filters.reportType === 'today') {
         url += '?period=today';
-      } else if (reportType === 'week') {
+      } else if (filters.reportType === 'week') {
         url += '?period=last-week';
-      } else if (reportType === 'custom' && startDate && endDate) {
-        url += `?startDate=${startDate}&endDate=${endDate}`;
-      } else if (statusFilter || search.trim()) {
+      } else if (filters.reportType === 'custom' && filters.startDate && filters.endDate) {
+        url += `?startDate=${filters.startDate}&endDate=${filters.endDate}`;
+      } else if (filters.statusFilter || filters.search.trim()) {
         const params = new URLSearchParams();
-        if (statusFilter) params.append('status', statusFilter);
-        if (search.trim()) params.append('search', search.trim());
+        if (filters.statusFilter) params.append('status', filters.statusFilter);
+        if (filters.search.trim()) params.append('search', filters.search.trim());
         url += `?${params.toString()}`;
       }
 
@@ -71,15 +70,20 @@ export default function TaskApp() {
     }
   };
 
+  // Atualiza quando filtros mudam
   useEffect(() => {
     fetchTasks();
-  }, [reportType, statusFilter, search, startDate, endDate, user?.id]);
+  }, [
+    filters.reportType,
+    filters.statusFilter,
+    filters.search,
+    filters.startDate,
+    filters.endDate,
+    effectiveUserId,
+  ]);
 
-  useEffect(() => {
-    if (reportType === 'custom' && startDate && endDate) {
-      fetchTasks();
-    }
-  }, [startDate, endDate]);
+  // ====================== ACTIONS (usando o hook) ======================
+  const actions = useTaskActions(effectiveUserId, fetchTasks);
 
   // ====================== ADICIONAR TAREFA ======================
   const handleAddTask = async () => {
@@ -88,7 +92,7 @@ export default function TaskApp() {
     }
 
     try {
-      await api.post(`/tasks/create/${user?.id}`, {
+      await api.post(`/tasks/create/${effectiveUserId}`, {
         title: newTitle.trim(),
         description: newDescription.trim(),
       });
@@ -103,110 +107,35 @@ export default function TaskApp() {
     }
   };
 
-  // ====================== MUDAR STATUS ======================
-  const toggleStatus = async (task: Task) => {
-    const statusOrder: Record<string, string> = {
-      pendente: 'em-andamento',
-      'em-andamento': 'concluido',
-      concluido: 'pendente',
-    };
+  // ====================== DELETAR TAREFA ======================
+  const openDeleteModal = (id: number, title: string) => {
+    setTaskToDelete(id);
+    setTaskTitleToDelete(title);
+    setShowDeleteModal(true);
+  };
 
-    const newStatus = statusOrder[task.status] || 'pendente';
-
-    let started_at = task.started_at;
-    let finished_at = task.finished_at;
-
-    if (newStatus === 'em-andamento' && !started_at) {
-      started_at = new Date().toISOString();
-    } else if (newStatus === 'concluido') {
-      finished_at = new Date().toISOString();
-    } else if (newStatus === 'pendente') {
-      finished_at = null;
-    }
+  const confirmDelete = async () => {
+    if (!taskToDelete) return;
 
     try {
-      await api.put(`/tasks/${task.id}`, {
-        title: task.title,
-        description: task.description,
-        status: newStatus,
-        started_at,
-        finished_at,
-      });
+      await api.delete(`/tasks/${taskToDelete}`);
       await fetchTasks();
-    } catch (err) {
-      alert('Erro ao atualizar status');
-    }
-  };
 
-  // ====================== SALVAR EDIÇÃO ======================
-  const saveEdit = async (id: number) => {
-    const isCompleting = editStatus === 'concluido';
-    const isProgressing = editStatus === 'em-andamento';
-
-    const started_at = isProgressing ? new Date().toISOString() : undefined;
-    const finished_at = isCompleting ? new Date().toISOString() : undefined;
-
-    try {
-      await api.put(`/tasks/${id}`, {
-        title: editTitle,
-        description: editDescription,
-        status: editStatus,
-        started_at,
-        finished_at,
+      setNotification({
+        message: `Tarefa "${taskTitleToDelete}" excluída com sucesso!`,
+        type: 'success',
       });
-      setEditingId(null);
-      await fetchTasks();
     } catch (err) {
-      alert('Erro ao salvar edição');
+      setNotification({
+        message: 'Erro ao excluir a tarefa. Tente novamente.',
+        type: 'error',
+      });
+    } finally {
+      setShowDeleteModal(false);
+      setTaskToDelete(null);
+      setTaskTitleToDelete('');
+      setTimeout(() => setNotification(null), 4000);
     }
-  };
-
-  // ====================== DELETAR TAREFA (COM MODAL) ======================
- const openDeleteModal = (id: number, title: string) => {
-  setTaskToDelete(id);
-  setTaskTitleToDelete(title);
-  setShowDeleteModal(true);
-};
-
-const confirmDelete = async () => {
-  if (!taskToDelete) return;
-
-  try {
-    await api.delete(`/tasks/${taskToDelete}`);
-    await fetchTasks();
-    
-    // Mensagem de sucesso bonita
-    setNotification({
-      message: `Tarefa "${taskTitleToDelete}" excluída com sucesso!`,
-      type: 'success'
-    });
-  } catch (err) {
-    setNotification({
-      message: 'Erro ao excluir a tarefa. Tente novamente.',
-      type: 'error'
-    });
-  } finally {
-    setShowDeleteModal(false);
-    setTaskToDelete(null);
-    setTaskTitleToDelete('');
-    
-    // Remove a notificação automaticamente após 4 segundos
-    setTimeout(() => setNotification(null), 4000);
-  }
-};
-
-  // ====================== OUTRAS FUNÇÕES ======================
-  const startEdit = (task: Task) => {
-    setEditingId(task.id);
-    setEditTitle(task.title);
-    setEditDescription(task.description || '');
-    setEditStatus(task.status);
-  };
-
-  const toggleExpand = (id: number) => {
-    const newSet = new Set(expandedTasks);
-    newSet.has(id) ? newSet.delete(id) : newSet.add(id);
-    setExpandedTasks(newSet);
   };
 
   return (
@@ -214,23 +143,17 @@ const confirmDelete = async () => {
       <Header />
       <div className="p-8 max-w-4xl mx-auto">
         <FiltersPanel
-          reportType={reportType}
-          setReportType={setReportType}
-          search={search}
-          setSearch={setSearch}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-          onClearFilters={() => {
-            setReportType('all');
-            setSearch('');
-            setStatusFilter('');
-            setStartDate('');
-            setEndDate('');
-          }}
+          reportType={filters.reportType}
+          setReportType={filters.setReportType}
+          search={filters.search}
+          setSearch={filters.setSearch}
+          statusFilter={filters.statusFilter}
+          setStatusFilter={filters.setStatusFilter}
+          startDate={filters.startDate}
+          setStartDate={filters.setStartDate}
+          endDate={filters.endDate}
+          setEndDate={filters.setEndDate}
+          onClearFilters={filters.clearFilters}
         />
 
         <NewTaskForm
@@ -245,12 +168,12 @@ const confirmDelete = async () => {
 
         <ul className="space-y-4">
           {tasks.length === 0 && (
-            <p className="text-center text-white py-12">Nenhuma tarefa encontrada.</p>
+            <p className="text-center text-gray-400 py-12">Nenhuma tarefa encontrada.</p>
           )}
 
           {tasks.map((task) => {
-            const isExpanded = expandedTasks.has(task.id);
-            const isEditing = editingId === task.id;
+            const isExpanded = actions.expandedTasks.has(task.id);
+            const isEditing = actions.editingId === task.id;
 
             return (
               <TaskItem
@@ -258,18 +181,18 @@ const confirmDelete = async () => {
                 task={task}
                 isExpanded={isExpanded}
                 isEditing={isEditing}
-                onToggleExpand={toggleExpand}
-                onToggleStatus={toggleStatus}
-                onDelete={(id) => openDeleteModal(id, task.title)}   // ← Passa título também
-                onStartEdit={startEdit}
-                editTitle={editTitle}
-                setEditTitle={setEditTitle}
-                editDescription={editDescription}
-                setEditDescription={setEditDescription}
-                editStatus={editStatus}
-                setEditStatus={setEditStatus}
-                onSaveEdit={saveEdit}
-                onCancelEdit={() => setEditingId(null)}
+                onToggleExpand={actions.toggleExpand}
+                onToggleStatus={actions.toggleStatus}
+                onDelete={(id) => openDeleteModal(id, task.title)}
+                onStartEdit={actions.startEdit}
+                editTitle={actions.editTitle}
+                setEditTitle={actions.setEditTitle}
+                editDescription={actions.editDescription}
+                setEditDescription={actions.setEditDescription}
+                editStatus={actions.editStatus}
+                setEditStatus={actions.setEditStatus}
+                onSaveEdit={actions.saveEdit}
+                onCancelEdit={actions.cancelEdit}
               />
             );
           })}
@@ -286,6 +209,17 @@ const confirmDelete = async () => {
         confirmText="Sim, excluir"
         isDanger={true}
       />
+
+      {/* Notificação */}
+      {notification && (
+        <div
+          className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-lg z-50 transition-all duration-300 ${
+            notification.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
+          }`}
+        >
+          {notification.message}
+        </div>
+      )}
     </div>
   );
 }
