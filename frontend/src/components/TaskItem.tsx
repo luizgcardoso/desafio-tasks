@@ -1,4 +1,5 @@
- interface Task {
+// src/components/TaskItem.tsx
+interface Task {
   id: number;
   title: string;
   description: string;
@@ -14,7 +15,7 @@ interface TaskItemProps {
   isEditing: boolean;
   onToggleExpand: (id: number) => void;
   onToggleStatus: (task: Task) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: number, title: string) => void;   // ← Alterado: agora recebe title também
   onStartEdit: (task: Task) => void;
   editTitle: string;
   setEditTitle: (value: string) => void;
@@ -67,10 +68,10 @@ export default function TaskItem({
         </button>
 
         <button 
-          onClick={() => onDelete(task.id)} 
+          onClick={() => onDelete(task.id, task.title)}   // ← Agora passa o título
           className="ml-4 px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-2xl transition"
         >
-          Delete
+          Excluir
         </button>
       </div>
 
