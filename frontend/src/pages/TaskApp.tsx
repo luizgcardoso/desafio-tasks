@@ -1,7 +1,11 @@
+// src/pages/TaskApp.tsx
 import { useState, useEffect } from 'react';
-import FiltersPanel from './components/FiltersPanel';
-import NewTaskForm from './components/NewTaskForm';
-import TaskItem from './components/TaskItem';
+import Header from '../components/Header';
+import FiltersPanel from '../components/FiltersPanel';
+import NewTaskForm from '../components/NewTaskForm';
+import TaskItem from '../components/TaskItem';
+import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 interface Task {
   id: number;
@@ -13,20 +17,14 @@ interface Task {
   status: string;
 }
 
-const API_BASE = 'http://localhost:3000';
-const USER_ID = 6;
-
-export default function App() {
+export default function TaskApp() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [isNewFormExpanded, setIsNewFormExpanded] = useState(false);
 
-  // Filtros
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
-  // Filtros de Relatório
   const [reportType, setReportType] = useState<'all' | 'today' | 'week' | 'custom'>('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -37,15 +35,18 @@ export default function App() {
   const [editDescription, setEditDescription] = useState('');
   const [editStatus, setEditStatus] = useState('');
 
-  const fetchTasks = async () => {
-    try {
-      let url = `${API_BASE}/tasks/user/${USER_ID}`;
+  const { user } = useAuth();
 
-      if (reportType === 'today') {
-        url += '?period=today';
-      } else if (reportType === 'week') {
-        url += '?period=last-week';
-      } else if (reportType === 'custom' && startDate && endDate) {
+  // ====================== BUSCAR TAREFAS ======================
+  const fetchTasks = async () => {
+    if (!user?.id) return;
+
+    try {
+      let url = `/tasks/user/${user.id}`;
+
+      if (reportType === 'today') url += '?period=today';
+      else if (reportType === 'week') url += '?period=last-week';
+      else if (reportType === 'custom' && startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
       } else if (statusFilter || search.trim()) {
         const params = new URLSearchParams();
@@ -54,56 +55,45 @@ export default function App() {
         url += `?${params.toString()}`;
       }
 
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Erro ao carregar tarefas');
-
-      const data = await res.json();
+      const response = await api.get(url);
+      const data = response.data;
       setTasks(Array.isArray(data) ? data : data.tasks || []);
     } catch (err) {
-      console.error(err);
-      alert('Erro ao conectar com o backend');
+      console.error('Erro ao buscar tarefas:', err);
     }
   };
 
   useEffect(() => {
     fetchTasks();
-  }, [reportType, statusFilter, search]);
+  }, [reportType, statusFilter, search, user?.id]);
 
   useEffect(() => {
-    if (reportType === 'custom' && startDate && endDate) {
-      fetchTasks();
-    }
+    if (reportType === 'custom' && startDate && endDate) fetchTasks();
   }, [startDate, endDate]);
 
-  // ====================== FUNÇÕES ======================
+  // ====================== ADICIONAR TAREFA ======================
   const handleAddTask = async () => {
     if (!newTitle.trim() || !newDescription.trim()) {
       return alert('Título e descrição são obrigatórios');
     }
 
     try {
-      const res = await fetch(`${API_BASE}/tasks/create/${USER_ID}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newTitle.trim(),
-          description: newDescription.trim(),
-        }),
+      await api.post(`/tasks/create/${user?.id}`, {
+        title: newTitle.trim(),
+        description: newDescription.trim(),
       });
 
-      if (res.ok) {
-        setNewTitle('');
-        setNewDescription('');
-        setIsNewFormExpanded(false);
-        await fetchTasks();
-      } else {
-        alert('Erro ao criar tarefa');
-      }
+      setNewTitle('');
+      setNewDescription('');
+      setIsNewFormExpanded(false);
+      await fetchTasks();
     } catch (err) {
-      alert('Erro ao adicionar tarefa');
+      console.error(err);
+      alert('Erro ao criar tarefa');
     }
   };
 
+  // ====================== MUDAR STATUS ======================
   const toggleStatus = async (task: Task) => {
     const statusOrder: Record<string, string> = {
       pendente: 'em-andamento',
@@ -112,6 +102,7 @@ export default function App() {
     };
 
     const newStatus = statusOrder[task.status] || 'pendente';
+
     let started_at = task.started_at;
     let finished_at = task.finished_at;
 
@@ -120,10 +111,12 @@ export default function App() {
     else if (newStatus === 'pendente') finished_at = null;
 
     try {
-      await fetch(`${API_BASE}/tasks/${task.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: task.title, description: task.description, status: newStatus, started_at, finished_at }),
+      await api.put(`/tasks/${task.id}`, {
+        title: task.title,
+        description: task.description,
+        status: newStatus,
+        started_at,
+        finished_at,
       });
       await fetchTasks();
     } catch (err) {
@@ -131,32 +124,38 @@ export default function App() {
     }
   };
 
+  // ====================== SALVAR EDIÇÃO ======================
   const saveEdit = async (id: number) => {
     const isCompleting = editStatus === 'concluido';
     const isProgressing = editStatus === 'em-andamento';
-    const started_at = isProgressing ? new Date().toISOString() : null;
-    const finished_at = isCompleting ? new Date().toISOString() : null;
+
+    const started_at = isProgressing ? new Date().toISOString() : undefined;
+    const finished_at = isCompleting ? new Date().toISOString() : undefined;
 
     try {
-      await fetch(`${API_BASE}/tasks/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: editTitle, description: editDescription, status: editStatus, started_at, finished_at }),
+      await api.put(`/tasks/${id}`, {
+        title: editTitle,
+        description: editDescription,
+        status: editStatus,
+        started_at,
+        finished_at,
       });
-      await fetchTasks();
       setEditingId(null);
+      await fetchTasks();
     } catch (err) {
       alert('Erro ao salvar edição');
     }
   };
 
+  // ====================== DELETAR ======================
   const deleteTask = async (id: number) => {
     if (!confirm('Excluir esta tarefa?')) return;
+
     try {
-      await fetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE' });
+      await api.delete(`/tasks/${id}`);
       await fetchTasks();
     } catch (err) {
-      alert('Erro ao deletar');
+      alert('Erro ao deletar tarefa');
     }
   };
 
@@ -173,24 +172,10 @@ export default function App() {
     setExpandedTasks(newSet);
   };
 
-  const loadAll = () => {
-    setReportType('all');
-    setStatusFilter('');
-    setSearch('');
-    setStartDate('');
-    setEndDate('');
-  };
-
-  const loadToday = () => setReportType('today');
-  const loadLastWeek = () => setReportType('week');
-  const loadCustom = () => setReportType('custom');
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center p-4">
-      <div className="bg-white shadow-2xl rounded-3xl p-8 w-full max-w-4xl">
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">To-Do List</h1>
-        <h3 className="text-center text-lg font-semibold text-gray-600 mb-8">Gerencie suas tarefas</h3>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-emerald-500">
+      <Header />
+      <div className="p-8 max-w-4xl mx-auto">
         <FiltersPanel
           reportType={reportType}
           setReportType={setReportType}
@@ -216,9 +201,11 @@ export default function App() {
         />
 
         <ul className="space-y-4">
-          {tasks.length === 0 && <p className="text-center text-gray-400 py-12">Nenhuma tarefa encontrada.</p>}
+          {tasks.length === 0 && (
+            <p className="text-center text-gray-400 py-12">Nenhuma tarefa encontrada.</p>
+          )}
 
-          {tasks.map(task => {
+          {tasks.map((task) => {
             const isExpanded = expandedTasks.has(task.id);
             const isEditing = editingId === task.id;
 
@@ -247,4 +234,4 @@ export default function App() {
       </div>
     </div>
   );
-} 
+}

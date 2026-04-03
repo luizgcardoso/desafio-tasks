@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm"
 import { Task } from "./Task"
-// import bcrypt from "bcryptjs";
+import bcrypt from "bcryptjs";
 @Entity('users')
 export class User {
 
@@ -13,7 +13,7 @@ export class User {
     @Column({ type: "text", unique: true })
     email: string
 
-    @Column({ type: "text" })
+    @Column({ type: "text", select: false })
     password: string
 
     @CreateDateColumn({ type: "timestamptz" })
@@ -28,7 +28,7 @@ export class User {
     @OneToMany(() => Task, task => task.user)
     tasks: Task[]
 
-    // async comparePassword(candidatePassword: string): Promise<boolean> {
-    //     return bcrypt.compare(candidatePassword, this.password);
-    // }
+    async comparePassword(password: string): Promise<boolean> {
+        return bcrypt.compare(password, this.password);
+    }
 }

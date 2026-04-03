@@ -1,47 +1,37 @@
+// src/app.ts  (ou server.ts)
 import express from 'express';
 import cors from 'cors';
-
 
 import { AppDataSource } from './database/data-source';
 import { taskRouter } from './routes/TaskRoutes';
 import { userRouter } from './routes/UserRoutes';
-// import AuthRoutes from './routes/AuthRoutes';
-// import authMiddleware from './middleware/AuthMiddleware';
+import authMiddleware from './middleware/AuthMiddleware';
 
 const app = express();
-const allowedOrigins = [
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-];
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true
 }));
+
 app.use(express.json());
-// app.use(AuthRoutes);
-// app.use(authMiddleware);
-app.use(taskRouter);
-app.use(userRouter);
+
+// ====================== ROTAS PÚBLICAS ======================
+app.use('/users', userRouter);        // register + login
+
+// ====================== ROTAS PROTEGIDAS ======================
+app.use(authMiddleware);              // ← Tudo abaixo exige token
+app.use('/tasks', taskRouter);
 
 app.get('/', (req, res) => {
-  console.log('Servidor rodando com Express!');
-  return res.send('Servidor rodando com Express!');
+  res.send('API To-Do List rodando com autenticação JWT');
 });
 
 AppDataSource.initialize()
   .then(() => {
-    app.listen(process.env.PORT || 3000, () => {
-      console.log('Servidor iniciado!');
-    })
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`Servidor rodando na porta ${PORT}`);
+    });
   })
-  .catch((err: Error) => {
-    console.error('Erro ao conectar no banco:', err);
-  });
+  .catch((err) => console.error('Erro ao conectar no banco:', err));

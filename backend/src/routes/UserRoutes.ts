@@ -1,16 +1,16 @@
-import Router from 'express';
-
+// src/routes/UserRoutes.ts
+import { Router } from 'express';
 import { UserController } from '../controllers/UserController';
 
 const userRouter = Router();
+const userController = new UserController();
 
+userRouter.post('/register', userController.register);
+userRouter.post('/login', userController.login);
 
-userRouter.post('/users', new UserController().createUser);
-
-userRouter.get('/users', new UserController().listUsers);
-userRouter.get('/users/:id', new UserController().listUserById);
-
-userRouter.put('/users/:id', new UserController().updateUser);
-userRouter.delete('/users/:id', new UserController().deleteUser);
+userRouter.get('/', userController.listUsers);
+userRouter.get('/:id', userController.listUserById);
+userRouter.put('/:id', userController.updateUser);
+userRouter.delete('/:id', userController.deleteUser);
 
 export { userRouter };

@@ -6,7 +6,7 @@ const api = axios.create({
   timeout: 10000,
 });
 
-// Adiciona token automaticamente em todas as requisições
+// Adiciona o token automaticamente em todas as requisições
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,7 +18,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Redireciona para login se token expirar/inválido
+// Se receber 401 (token inválido/expirado), redireciona para login
 api.interceptors.response.use(
   (response) => response,
   (error) => {
