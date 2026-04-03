@@ -20,22 +20,6 @@ export default function NewTaskForm({
   setIsNewFormExpanded,
   onAddTask,
 }: NewTaskFormProps) {
-  const [error, setError] = useState('');
-
-  const handleSubmit = () => {
-    if (!newTitle.trim()) {
-      setError('O título da tarefa é obrigatório.');
-      return;
-    }
-    if (!newDescription.trim()) {
-      setError('A descrição da tarefa é obrigatória.');
-      return;
-    }
-
-    setError('');
-    onAddTask();
-  };
-
   return (
     <div className="mb-8 bg-white rounded-3xl shadow p-6">
       <button
@@ -49,23 +33,21 @@ export default function NewTaskForm({
         <div className="mt-6 space-y-4">
           <input
             type="text"
-            placeholder="Título da tarefa *"
+            placeholder="Título da tarefa"
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
           <textarea
-            placeholder="Descrição da tarefa *"
+            placeholder="Descrição da tarefa (opcional)"
             value={newDescription}
             onChange={(e) => setNewDescription(e.target.value)}
             className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-y"
           />
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
           <button
-            onClick={handleSubmit}
+            onClick={onAddTask}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-semibold transition"
           >
             Criar Tarefa

@@ -1,4 +1,3 @@
-// src/app.ts  (ou server.ts)
 import express from 'express';
 import cors from 'cors';
 
@@ -16,11 +15,9 @@ app.use(cors({
 
 app.use(express.json());
 
-// ====================== ROTAS PÚBLICAS ======================
-app.use('/users', userRouter);        // register + login
+app.use('/users', userRouter);
 
-// ====================== ROTAS PROTEGIDAS ======================
-app.use(authMiddleware);              // ← Tudo abaixo exige token
+app.use(authMiddleware);
 app.use('/tasks', taskRouter);
 
 app.get('/', (req, res) => {

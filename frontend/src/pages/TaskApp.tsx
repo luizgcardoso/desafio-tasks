@@ -5,7 +5,8 @@ import FiltersPanel from '../components/FiltersPanel';
 import NewTaskForm from '../components/NewTaskForm';
 import TaskItem from '../components/TaskItem';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';   // ← Usando axios com interceptor
+import api from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 
 interface Task {
   id: number;
@@ -35,7 +36,12 @@ export default function TaskApp() {
   const [editDescription, setEditDescription] = useState('');
   const [editStatus, setEditStatus] = useState('');
 
-  const { user } = useAuth();   // ← Pegamos o user do contexto
+  // Estados do Modal de Confirmação
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
+  const [taskTitleToDelete, setTaskTitleToDelete] = useState('');
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { user } = useAuth();
 
   // ====================== BUSCAR TAREFAS ======================
   const fetchTasks = async () => {
@@ -44,9 +50,11 @@ export default function TaskApp() {
     try {
       let url = `/tasks/user/${user.id}`;
 
-      if (reportType === 'today') url += '?period=today';
-      else if (reportType === 'week') url += '?period=last-week';
-      else if (reportType === 'custom' && startDate && endDate) {
+      if (reportType === 'today') {
+        url += '?period=today';
+      } else if (reportType === 'week') {
+        url += '?period=last-week';
+      } else if (reportType === 'custom' && startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
       } else if (statusFilter || search.trim()) {
         const params = new URLSearchParams();
@@ -57,7 +65,6 @@ export default function TaskApp() {
 
       const response = await api.get(url);
       const data = response.data;
-
       setTasks(Array.isArray(data) ? data : data.tasks || []);
     } catch (err) {
       console.error('Erro ao buscar tarefas:', err);
@@ -66,7 +73,7 @@ export default function TaskApp() {
 
   useEffect(() => {
     fetchTasks();
-  }, [reportType, statusFilter, search, user?.id]);
+  }, [reportType, statusFilter, search, startDate, endDate, user?.id]);
 
   useEffect(() => {
     if (reportType === 'custom' && startDate && endDate) {
@@ -154,18 +161,41 @@ export default function TaskApp() {
     }
   };
 
-  // ====================== DELETAR ======================
-  const deleteTask = async (id: number) => {
-    if (!confirm('Excluir esta tarefa?')) return;
+  // ====================== DELETAR TAREFA (COM MODAL) ======================
+ const openDeleteModal = (id: number, title: string) => {
+  setTaskToDelete(id);
+  setTaskTitleToDelete(title);
+  setShowDeleteModal(true);
+};
 
-    try {
-      await api.delete(`/tasks/${id}`);
-      await fetchTasks();
-    } catch (err) {
-      alert('Erro ao deletar tarefa');
-    }
-  };
+const confirmDelete = async () => {
+  if (!taskToDelete) return;
 
+  try {
+    await api.delete(`/tasks/${taskToDelete}`);
+    await fetchTasks();
+    
+    // Mensagem de sucesso bonita
+    setNotification({
+      message: `Tarefa "${taskTitleToDelete}" excluída com sucesso!`,
+      type: 'success'
+    });
+  } catch (err) {
+    setNotification({
+      message: 'Erro ao excluir a tarefa. Tente novamente.',
+      type: 'error'
+    });
+  } finally {
+    setShowDeleteModal(false);
+    setTaskToDelete(null);
+    setTaskTitleToDelete('');
+    
+    // Remove a notificação automaticamente após 4 segundos
+    setTimeout(() => setNotification(null), 4000);
+  }
+};
+
+  // ====================== OUTRAS FUNÇÕES ======================
   const startEdit = (task: Task) => {
     setEditingId(task.id);
     setEditTitle(task.title);
@@ -194,7 +224,13 @@ export default function TaskApp() {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          onApplyFilter={fetchTasks}
+          onClearFilters={() => {
+            setReportType('all');
+            setSearch('');
+            setStatusFilter('');
+            setStartDate('');
+            setEndDate('');
+          }}
         />
 
         <NewTaskForm
@@ -209,7 +245,7 @@ export default function TaskApp() {
 
         <ul className="space-y-4">
           {tasks.length === 0 && (
-            <p className="text-center text-gray-400 py-12">Nenhuma tarefa encontrada.</p>
+            <p className="text-center text-white py-12">Nenhuma tarefa encontrada.</p>
           )}
 
           {tasks.map((task) => {
@@ -224,7 +260,7 @@ export default function TaskApp() {
                 isEditing={isEditing}
                 onToggleExpand={toggleExpand}
                 onToggleStatus={toggleStatus}
-                onDelete={deleteTask}
+                onDelete={(id) => openDeleteModal(id, task.title)}   // ← Passa título também
                 onStartEdit={startEdit}
                 editTitle={editTitle}
                 setEditTitle={setEditTitle}
@@ -239,6 +275,17 @@ export default function TaskApp() {
           })}
         </ul>
       </div>
+
+      {/* Modal de Confirmação */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDelete}
+        title="Excluir Tarefa"
+        message={`Tem certeza que deseja excluir a tarefa:\n\n"${taskTitleToDelete}"?\n\nEsta ação não pode ser desfeita.`}
+        confirmText="Sim, excluir"
+        isDanger={true}
+      />
     </div>
   );
 }

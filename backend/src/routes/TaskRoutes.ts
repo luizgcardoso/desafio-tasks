@@ -1,4 +1,3 @@
-// src/routes/task.routes.ts
 import { Router } from 'express';
 import { TaskController } from '../controllers/TaskController';
 import { authMiddleware } from '../middleware/AuthMiddleware';
@@ -6,7 +5,6 @@ import { authMiddleware } from '../middleware/AuthMiddleware';
 const taskRouter = Router();
 const taskController = new TaskController();
 
-// Rota principal para listar tarefas com filtros avançados
 taskRouter.get('/user/:userId', taskController.listTasks);
 
 taskRouter.post('/create/:userId', taskController.createTask);
