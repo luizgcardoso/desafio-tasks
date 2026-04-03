@@ -12,18 +12,11 @@ export class UserController {
 
         try {
             const userExists = await userRepository.findOneBy({ email });
-            if (userExists) {
-                return res.status(400).json({ message: "Email já cadastrado" });
-            }
+            if (userExists) return res.status(400).json({ message: "Email já cadastrado" });
 
             const hashedPassword = await bcrypt.hash(password, 8);
 
-            const user = userRepository.create({
-                name,
-                email,
-                password: hashedPassword,
-            });
-
+            const user = userRepository.create({ name, email, password: hashedPassword });
             await userRepository.save(user);
 
             return res.status(201).json({ message: "Usuário criado com sucesso" });
@@ -37,46 +30,29 @@ export class UserController {
         const { email, password } = req.body;
 
         try {
-            // Forçamos o carregamento da senha
             const user = await userRepository.findOne({
                 where: { email },
-                select: ["id", "name", "email", "password"]   // ← Importante!
+                select: ["id", "name", "email", "password"]
             });
 
-            if (!user) {
-                return res.status(401).json({ message: "Email ou senha inválidos" });
-            }
+            if (!user) return res.status(401).json({ message: "Email ou senha inválidos" });
 
             const isValid = await bcrypt.compare(password, user.password);
-
-            if (!isValid) {
-                return res.status(401).json({ message: "Email ou senha inválidos" });
-            }
+            if (!isValid) return res.status(401).json({ message: "Email ou senha inválidos" });
 
             const token = jwt.sign(
-                {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name
-                },
+                { id: user.id, email: user.email, name: user.name },
                 authConfig.secret as string,
                 { expiresIn: authConfig.expiresIn }
             );
 
             return res.json({
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                },
-                token,
+                user: { id: user.id, name: user.name, email: user.email },
+                token
             });
-        } catch (error: any) {
-            console.error("Erro no login:", error.message || error);
-            return res.status(500).json({
-                message: "Erro ao fazer login",
-                error: error.message
-            });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Erro ao fazer login" });
         }
     }
 
