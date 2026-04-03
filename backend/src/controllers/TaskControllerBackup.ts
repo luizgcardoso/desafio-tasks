@@ -24,16 +24,40 @@ export class TaskController {
     }
   }
 
+  // ====================== LISTAGEM COM FILTROS (melhorada) ======================
   async listTasks(req: Request, res: Response) {
     try {
-      const tasks = await taskRepository.find({ relations: { user: true } });
-      if (!tasks) {
-        return res.status(404).json({ message: "Task not found" });
+      const userId = Number(req.params.userId);
+      const { status, period, startDate, endDate, search } = req.query;
+
+      // Se não tiver filtros avançados, usa o método simples (compatibilidade)
+      if (!status && !period && !startDate && !endDate && !search) {
+        const tasks = await taskRepository.findByUser(userId);
+        return res.json({ count: tasks.length, tasks });
       }
-      return res.json(tasks);
+
+      // Usa o novo método com filtros
+      const filters = {
+        userId,
+        status: status as string | undefined,
+        period: period as string | undefined,
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
+        search: search as string | undefined,
+      };
+
+      const tasks = await taskRepository.findWithFilters(filters);
+
+      return res.json({
+        count: tasks.length,
+        tasks
+      });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Failed to list tasks" });
+      console.error(error);
+      return res.status(500).json({
+        message: "Erro ao listar tarefas",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   }
 

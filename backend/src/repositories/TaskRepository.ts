@@ -1,55 +1,81 @@
+// src/repositories/TaskRepository.ts
 import { AppDataSource } from "../database/data-source";
 import { Task } from "../entities/Task";
+
 export const taskRepository = AppDataSource.getRepository(Task).extend({
 
   async findWithFilters(filters: any): Promise<Task[]> {
-    const query = taskRepository.createQueryBuilder('task')
-      .where('task.userId = :userId', { userId: filters.userId });
+    const query = this.createQueryBuilder('task')
+      .leftJoinAndSelect('task.user', 'user')
+      .where('task.user_id = :userId', { userId: filters.userId })
+      .orderBy('task.created_at', 'DESC');
 
-    // Filtro por status
     if (filters.status) {
       query.andWhere('task.status = :status', { status: filters.status });
     }
 
-    // Filtro por busca (title ou description)
-    if (filters.search) {
+    if (filters.search && filters.search.trim() !== '') {
+      const searchTerm = `%${filters.search.trim()}%`;
       query.andWhere(
         '(task.title ILIKE :search OR task.description ILIKE :search)',
-        { search: `%${filters.search}%` }
+        { search: searchTerm }
       );
     }
 
-    // Filtro por período (today, last-week, last-month)
+    // ==================== FILTRO POR PERÍODO ====================
     if (filters.period) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
       if (filters.period === 'today') {
-        query.andWhere('task.created_at >= :start', { start: today });
-        query.andWhere('task.created_at < :end', {
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        });
+        query.andWhere("DATE(task.created_at) = CURRENT_DATE");
       }
       else if (filters.period === 'last-week') {
-        const lastWeek = new Date(today);
-        lastWeek.setDate(lastWeek.getDate() - 7);
-        query.andWhere('task.created_at >= :start', { start: lastWeek });
+        query.andWhere("task.created_at >= CURRENT_DATE - INTERVAL '7 days'");
       }
       else if (filters.period === 'last-month') {
-        const lastMonth = new Date(today);
-        lastMonth.setMonth(lastMonth.getMonth() - 1);
-        query.andWhere('task.created_at >= :start', { start: lastMonth });
+        query.andWhere("task.created_at >= CURRENT_DATE - INTERVAL '1 month'");
       }
+      /* const now = new Date();
+ 
+       if (filters.period === 'today') {
+         const startOfDay = new Date(now);
+         startOfDay.setHours(0, 0, 0, 0);
+         const endOfDay = new Date(now);
+         endOfDay.setHours(23, 59, 59, 999);
+         query.andWhere(
+           'task.created_at BETWEEN :start AND :end',
+           {
+             start: startOfDay.toISOString(),
+             end: endOfDay.toISOString(),
+           }
+         );
+       }
+       else if (filters.period === 'last-week') {
+         const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7, 0, 0, 0);
+         query.andWhere('task.created_at >= :start', { start: startOfWeek });
+       }
+       else if (filters.period === 'last-month') {
+         const startOfMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+         query.andWhere('task.created_at >= :start', { start: startOfMonth });
+       }*/
     }
-    // Filtro manual por intervalo de datas
+    // Filtro customizado por data
     else if (filters.startDate && filters.endDate) {
-      query.andWhere('task.created_at >= :startDate', { startDate: filters.startDate });
-      query.andWhere('task.created_at <= :endDate', { endDate: filters.endDate });
+      query.andWhere('task.created_at >= :startDate', {
+        startDate: new Date(filters.startDate)
+      });
+      query.andWhere('task.created_at <= :endDate', {
+        endDate: new Date(filters.endDate + 'T23:59:59')
+      });
     }
-
-    query.orderBy('task.created_at', 'DESC');
 
     return query.getMany();
+  },
+
+  async findByUser(userId: number): Promise<Task[]> {
+    return this.find({
+      where: { user: { id: userId } },
+      relations: { user: true },
+      order: { created_at: 'DESC' }
+    });
   }
 });
 
