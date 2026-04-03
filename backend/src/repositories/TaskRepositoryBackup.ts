@@ -1,55 +1,64 @@
+// src/repositories/TaskRepository.ts
 import { AppDataSource } from "../database/data-source";
 import { Task } from "../entities/Task";
+
 export const taskRepository = AppDataSource.getRepository(Task).extend({
 
   async findWithFilters(filters: any): Promise<Task[]> {
-    const query = taskRepository.createQueryBuilder('task')
-      .where('task.userId = :userId', { userId: filters.userId });
+    const query = this.createQueryBuilder('task')
+      .leftJoinAndSelect('task.user', 'user')
+      .where('task.user_id = :userId', { userId: filters.userId })
+      .orderBy('task.created_at', 'DESC');
 
-    // Filtro por status
     if (filters.status) {
       query.andWhere('task.status = :status', { status: filters.status });
     }
 
-    // Filtro por busca (title ou description)
-    if (filters.search) {
+    if (filters.search && filters.search.trim() !== '') {
+      const searchTerm = `%${filters.search.trim()}%`;
       query.andWhere(
         '(task.title ILIKE :search OR task.description ILIKE :search)',
-        { search: `%${filters.search}%` }
+        { search: searchTerm }
       );
     }
 
-    // Filtro por período (today, last-week, last-month)
     if (filters.period) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
       if (filters.period === 'today') {
+        const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
         query.andWhere('task.created_at >= :start', { start: today });
-        query.andWhere('task.created_at < :end', {
-          end: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        });
-      }
-      else if (filters.period === 'last-week') {
+        query.andWhere('task.created_at < :end', { end: tomorrow });
+      } else if (filters.period === 'last-week') {
         const lastWeek = new Date(today);
         lastWeek.setDate(lastWeek.getDate() - 7);
         query.andWhere('task.created_at >= :start', { start: lastWeek });
-      }
-      else if (filters.period === 'last-month') {
+      } else if (filters.period === 'last-month') {
         const lastMonth = new Date(today);
         lastMonth.setMonth(lastMonth.getMonth() - 1);
         query.andWhere('task.created_at >= :start', { start: lastMonth });
       }
     }
-    // Filtro manual por intervalo de datas
     else if (filters.startDate && filters.endDate) {
-      query.andWhere('task.created_at >= :startDate', { startDate: filters.startDate });
-      query.andWhere('task.created_at <= :endDate', { endDate: filters.endDate });
+      query.andWhere('task.created_at >= :startDate', {
+        startDate: new Date(filters.startDate)
+      });
+      query.andWhere('task.created_at <= :endDate', {
+        endDate: new Date(filters.endDate + 'T23:59:59')
+      });
     }
 
-    query.orderBy('task.created_at', 'DESC');
-
     return query.getMany();
+  },
+
+  // Método de compatibilidade
+  async findByUser(userId: number): Promise<Task[]> {
+    return this.find({
+      where: { user: { id: userId } },
+      relations: { user: true },
+      order: { created_at: 'DESC' }
+    });
   }
 });
 
