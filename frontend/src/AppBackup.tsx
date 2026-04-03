@@ -11,7 +11,7 @@ interface Task {
 }
 
 const API_BASE = 'http://localhost:3000';
-const USER_ID = 6; // ⚠️ Altere para o seu usuário
+const USER_ID = 6; //mock usuário
 
 export default function App() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -34,17 +34,16 @@ export default function App() {
   const [editDescription, setEditDescription] = useState('');
   const [editStatus, setEditStatus] = useState('');
 
-  // ====================== CARREGAR TAREFAS ======================
   const fetchTasks = async () => {
   try {
     let url = `${API_BASE}/tasks/user/${USER_ID}`;
 
     if (reportType === 'today') {
-      url = `${API_BASE}/tasks/user/${USER_ID}/today`;
+      url += '/?period=today';
     } else if (reportType === 'week') {
-      url += '/last-week';
+      url += '/?last-week';
     } else if (reportType === 'custom' && startDate && endDate) {
-      url += `/date-range?startDate=${startDate}&endDate=${endDate}`;
+      url += `/?startDate=${startDate}&endDate=${endDate}`;
     } 
     // Filtros via query params (status + search)
     else if (statusFilter || search) {
@@ -104,7 +103,6 @@ export default function App() {
     }
   };
 
-  // ====================== TOGGLE STATUS ======================
   const toggleStatus = async (task: Task) => {
     const statusOrder: Record<string, string> = {
       pendente: 'em-andamento',
@@ -136,7 +134,6 @@ export default function App() {
     }
   };
 
-  // ====================== SALVAR EDIÇÃO ======================
   const saveEdit = async (id: number) => {
     const isCompleting = editStatus === 'concluido';
     const isProgressing = editStatus === 'em-andamento';
@@ -156,7 +153,6 @@ export default function App() {
     }
   };
 
-  // ====================== OUTRAS FUNÇÕES ======================
   const deleteTask = async (id: number) => {
     if (!confirm('Excluir esta tarefa?')) return;
     try {
@@ -180,7 +176,7 @@ export default function App() {
     setExpandedTasks(newSet);
   };
 
-  // ====================== RELATÓRIOS ======================
+  // Funções para carregar relatórios
 const loadAll = () => {
     setReportType('all');
     setStatusFilter('');
@@ -198,7 +194,6 @@ const loadAll = () => {
         <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">To-Do List</h1>
         <h3 className="text-center text-lg font-semibold text-gray-600 mb-8">Gerencie suas tarefas</h3>
 
-        {/* ==================== SEÇÃO DE RELATÓRIOS ==================== */}
         <div className="mb-8 bg-gray-50 p-6 rounded-3xl border border-gray-100">
           <h4 className="font-semibold text-gray-700 mb-4">Relatórios e Filtros</h4>
 
@@ -254,7 +249,7 @@ const loadAll = () => {
           </div>
         </div>
 
-        {/* ==================== NOVA TAREFA ==================== */}
+        {/*form new tasks */}
         <h2 className=" text-center text-xl font-bold text-gray-800 mb-4">Adicionar Nova Tarefa  </h2>
         <div className="mb-10 border border-gray-200 rounded-3xl overflow-hidden">
           <div className="flex items-center p-5 cursor-pointer hover:bg-gray-50" onClick={() => setIsNewFormExpanded(true)}>
@@ -284,7 +279,7 @@ const loadAll = () => {
           )}
         </div>
 
-        {/* ==================== LISTA DE TAREFAS ==================== */}
+        {/* tasks list session */}
         <ul className="space-y-4">
           {tasks.length === 0 && <p className="text-center text-gray-400 py-12">Nenhuma tarefa encontrada.</p>}
 
