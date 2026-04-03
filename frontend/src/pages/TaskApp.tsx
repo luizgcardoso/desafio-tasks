@@ -5,7 +5,7 @@ import FiltersPanel from '../components/FiltersPanel';
 import NewTaskForm from '../components/NewTaskForm';
 import TaskItem from '../components/TaskItem';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
+import api from '../services/api';   // ← Usando axios com interceptor
 
 interface Task {
   id: number;
@@ -35,7 +35,7 @@ export default function TaskApp() {
   const [editDescription, setEditDescription] = useState('');
   const [editStatus, setEditStatus] = useState('');
 
-  const { user } = useAuth();
+  const { user } = useAuth();   // ← Pegamos o user do contexto
 
   // ====================== BUSCAR TAREFAS ======================
   const fetchTasks = async () => {
@@ -57,6 +57,7 @@ export default function TaskApp() {
 
       const response = await api.get(url);
       const data = response.data;
+
       setTasks(Array.isArray(data) ? data : data.tasks || []);
     } catch (err) {
       console.error('Erro ao buscar tarefas:', err);
@@ -68,7 +69,9 @@ export default function TaskApp() {
   }, [reportType, statusFilter, search, user?.id]);
 
   useEffect(() => {
-    if (reportType === 'custom' && startDate && endDate) fetchTasks();
+    if (reportType === 'custom' && startDate && endDate) {
+      fetchTasks();
+    }
   }, [startDate, endDate]);
 
   // ====================== ADICIONAR TAREFA ======================
@@ -106,9 +109,13 @@ export default function TaskApp() {
     let started_at = task.started_at;
     let finished_at = task.finished_at;
 
-    if (newStatus === 'em-andamento' && !started_at) started_at = new Date().toISOString();
-    else if (newStatus === 'concluido') finished_at = new Date().toISOString();
-    else if (newStatus === 'pendente') finished_at = null;
+    if (newStatus === 'em-andamento' && !started_at) {
+      started_at = new Date().toISOString();
+    } else if (newStatus === 'concluido') {
+      finished_at = new Date().toISOString();
+    } else if (newStatus === 'pendente') {
+      finished_at = null;
+    }
 
     try {
       await api.put(`/tasks/${task.id}`, {
