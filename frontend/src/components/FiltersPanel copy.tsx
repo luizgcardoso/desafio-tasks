@@ -48,14 +48,14 @@ export default function FiltersPanel({
 
       {/* Botões de Relatório Rápido */}
       <div className="flex flex-wrap gap-3 mb-6">
-        {/* <button
+        <button
           onClick={() => setReportType('all')}
           className={`px-6 py-3 rounded-2xl font-medium transition ${
             reportType === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 hover:bg-gray-200'
           }`}
         >
           Todas as Tarefas
-        </button> */}
+        </button>
         <button
           onClick={() => setReportType('today')}
           className={`px-6 py-3 rounded-2xl font-medium transition ${
