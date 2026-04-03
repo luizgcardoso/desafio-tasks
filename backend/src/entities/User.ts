@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm"
 import { Task } from "./Task"
-
+// import bcrypt from "bcryptjs";
 @Entity('users')
 export class User {
 
@@ -20,7 +20,7 @@ export class User {
     created_at: Date
 
     @DeleteDateColumn({ type: "timestamp", nullable: true })
-    deleted_at: Date
+    deleted_at: Date | null
     /*
         @Column({ type: "text", nullable: true, default: "ativo" })
         status: string
@@ -28,4 +28,7 @@ export class User {
     @OneToMany(() => Task, task => task.user)
     tasks: Task[]
 
+    // async comparePassword(candidatePassword: string): Promise<boolean> {
+    //     return bcrypt.compare(candidatePassword, this.password);
+    // }
 }

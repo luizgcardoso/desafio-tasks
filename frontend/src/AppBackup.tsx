@@ -52,6 +52,7 @@ export default function App() {
         body: JSON.stringify({
           title: newTitle.trim(),
           description: newDescription.trim(),
+          // description: newDescription.trim() || '',
         }),
       });
 
@@ -100,8 +101,8 @@ export default function App() {
         }),
       });
 
-      setTasks(tasks.map(task =>
-        task.id === task.id ? { ...task, status: newStatus, started_at, finished_at } : task
+      setTasks(tasks.map(t =>
+        t.id === task.id ? { ...t, status: newStatus, started_at, finished_at } : t
       ));
     } catch (err) {
       alert('Erro ao atualizar status');
@@ -110,12 +111,8 @@ export default function App() {
 
   // ====================== SALVAR EDIÇÃO ======================
   const saveEdit = async (id: number) => {
-    const task = tasks.find(t => t.id === id);
     const isCompleting = editStatus === 'concluido';
-    const isProgressing = editStatus === 'em-andamento';
-    const started_at = isProgressing && !task?.started_at ? new Date().toISOString() : task?.started_at || null;
     const finished_at = isCompleting ? new Date().toISOString() : null;
-
 
     try {
       await fetch(`${API_BASE}/tasks/${id}`, {
@@ -125,15 +122,14 @@ export default function App() {
           title: editTitle,
           description: editDescription,
           status: editStatus,
-          started_at,
           finished_at,
         }),
       });
 
-      setTasks(tasks.map(task =>
-        task.id === id
-          ? { ...task, title: editTitle, description: editDescription, status: editStatus, started_at, finished_at }
-          : task
+      setTasks(tasks.map(t =>
+        t.id === id
+          ? { ...t, title: editTitle, description: editDescription, status: editStatus, finished_at }
+          : t
       ));
       setEditingId(null);
     } catch (err) {

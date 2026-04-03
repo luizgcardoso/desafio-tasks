@@ -16,13 +16,13 @@ export class Task {
     created_at: Date
 
     @Column({ type: "timestamptz", nullable: true })
-    started_at: Date
+    started_at: Date | null
 
     @Column({ type: "timestamptz", nullable: true })
-    finished_at: Date
+    finished_at: Date | null
 
     @DeleteDateColumn({ type: "timestamptz", nullable: true })
-    deleted_at: Date
+    deleted_at: Date | null
 
     @Column({ type: "text", default: "pendente" })
     status: string
