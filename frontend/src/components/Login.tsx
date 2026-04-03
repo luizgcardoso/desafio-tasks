@@ -1,4 +1,3 @@
-// src/components/Login.tsx
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -16,7 +15,6 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     const success = await login(email, password);
     if (success) {
       navigate('/tasks');
@@ -31,7 +29,6 @@ export default function Login() {
       <div className="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-md">
         <h1 className="text-4xl font-bold text-center text-gray-800 mb-2">To-Do List</h1>
         <p className="text-center text-gray-600 mb-8">Entre com sua conta</p>
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <input
@@ -43,7 +40,6 @@ export default function Login() {
               required
             />
           </div>
-
           <div>
             <input
               type="password"
@@ -54,9 +50,7 @@ export default function Login() {
               required
             />
           </div>
-
           {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-
           <button
             type="submit"
             disabled={loading}
@@ -65,7 +59,6 @@ export default function Login() {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-
         <p className="text-center mt-6 text-sm text-gray-600">
           Não tem conta?{' '}
           <Link to="/register" className="text-blue-600 font-semibold hover:underline">

@@ -1,246 +1,156 @@
-
-import { Request, Response } from "express"
+import { Request, Response } from "express";
+import { Between, Like } from "typeorm";
 import { taskRepository } from "../repositories/TaskRepository";
-import { userRepository } from "../repositories/UserRepository";
-import { Between } from "typeorm";
-import { count } from "console";
 
 export class TaskController {
-
-  async createTask(req: Request, res: Response) {
-    const { title, description } = req.body;
-    const { userId } = req.params;
-    try {
-      const user = await userRepository.findOneBy({ id: Number(userId) });
-      if (!user || null) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      const task = await taskRepository.create({ title, description, user });
-      await taskRepository.save(task);
-      return res.status(201).json(task); // created 
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Failed to create task" });
-    }
-  }
 
   async listTasks(req: Request, res: Response) {
     try {
       const userId = Number(req.params.userId);
+
+      if (isNaN(userId) || userId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuário inválido"
+        });
+      }
+
       const { status, period, startDate, endDate, search } = req.query;
 
-      // TESTAR
-      if (!status && !period && !startDate && !endDate && !search) {
-        const tasks = await taskRepository.findByUser(userId);
-        return res.json({ count: tasks.length, tasks });
-      }
-      const filters = {
-        userId,
-        status: status as string | undefined,
-        period: period as string | undefined,
-        startDate: startDate as string | undefined,
-        endDate: endDate as string | undefined,
-        search: search as string | undefined,
+      const where: any = {
+        user: { id: userId }
       };
-      const tasks = await taskRepository.findWithFilters(filters);
+
+      if (status && typeof status === 'string') {
+        where.status = status;
+      }
+
+      if (search && typeof search === 'string' && search.trim() !== '') {
+        where.title = Like(`%${search.trim()}%`);
+      }
+
+      if (period === 'today') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        where.created_at = Between(today, tomorrow);
+      }
+      else if (period === 'last-week') {
+        const today = new Date();
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        lastWeek.setHours(0, 0, 0, 0);
+
+        where.created_at = Between(lastWeek, today);
+      }
+      else if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          return res.status(400).json({
+            success: false,
+            message: "Formato de data inválido. Use YYYY-MM-DD"
+          });
+        }
+        where.created_at = Between(start, end);
+      }
+
+      const tasks = await taskRepository.find({
+        where,
+        relations: { user: true },
+        order: { created_at: "DESC" }
+      });
+
       return res.json({
+        success: true,
         count: tasks.length,
         tasks
       });
-    } catch (error) {
-      console.error(error);
+
+    } catch (error: any) {
+      console.error("Erro ao listar tarefas:", error);
       return res.status(500).json({
-        message: "Erro ao listar tarefas",
-        error: error instanceof Error ? error.message : String(error)
+        success: false,
+        message: "Erro interno ao listar tarefas",
+        error: error.message || "Erro desconhecido"
       });
     }
   }
 
-  // async listTaskById(req: Request, res: Response) {
-  //   const { id } = req.params;
-  //   try {
-  //     const task = await taskRepository.findOneBy({ id: Number(id) });
-  //     if (!task) {
-  //       return res.status(404).json({ message: "Task not found" });
-  //     }
-  //     return res.json(task);
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json({ message: "Failed to list tasks" });
-  //   }
-  // }
+  async createTask(req: Request, res: Response) {
+    const { title, description } = req.body;
+    const { userId } = req.params;
 
-  // async listTasksByUserId(req: Request, res: Response) {
-  //   const { userId } = req.params;
-  //   try {
-  //     const user = await userRepository.findOneBy({ id: Number(userId) });
-  //     if (!user) {
-  //       return res.status(404).json({ message: "User not found" });
-  //     }
-  //     const tasks = await taskRepository.find({
-  //       where: {
-  //         user: { id: Number(userId) }
-  //       },
-  //       relations: { user: true }
-  //     });
-  //     return res.json({ count: tasks.length, tasks });
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json({ message: "Failed to list tasks" });
-  //   }
-  // }
+    if (!title || typeof title !== 'string' || title.trim() === '' || !description || typeof description !== 'string' || description.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: "O título e a descrição da tarefa são obrigatórios e devem ser strings não vazias"
+      });
+    }
+    try {
+      const task = taskRepository.create({
+        title,
+        description,
+        user: { id: Number(userId) }
 
-  // async listTasksByDateInterval(req: Request, res: Response) {
-  //   const { userId } = req.params;
-  //   const { startDate, endDate } = req.query;
-  //   // const { userId, startDate, endDate } = req.query;
-
-  //   if (!userId || !startDate || !endDate) {
-  //     return res.status(400).json({ mmesage: "Required parameters missing" })
-  //     // message: "Os parâmetros startDate e endDate são obrigatórios (formato YYYY-MM-DD)"
-  //   }
-  //   try {
-  //     const user = await userRepository.findOneBy({ id: Number(userId) });
-  //     if (!user) {
-  //       return res.status(404).json({ message: "User not found" });
-  //     }
-
-  //     const tasks = await taskRepository.find({
-  //       where: {
-  //         user: { id: Number(userId) },
-  //         created_at: Between(
-  //           new Date(`${startDate}T00:00:00`),
-  //           new Date(`${endDate}T23:59:59`)
-  //         ),
-  //       },
-  //       relations: { user: true },
-  //       order: { created_at: "ASC" }
-  //     });
-  //     if (tasks.length === 0) {
-  //       return res.status(200).json({ message: "Tasks not found" });
-  //     }
-  //     return res.json({ count: tasks.length, tasks });
-
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json({ message: "Failed to list tasks" });
-  //   }
-  // }
-
-  // async listTasksToday(req: Request, res: Response) {
-  //   const { userId } = req.params;
-  //   const today = new Date();
-  //   const start = new Date(today.setHours(0, 0, 0, 0));
-  //   const end = new Date(today.setHours(23, 59, 59, 999));
-
-  //   try {
-  //     const user = await userRepository.findOneBy({ id: Number(userId) });
-  //     if (!user) {
-  //       return res.status(404).json({ message: "User not found" });
-  //     }
-
-  //     const tasks = await taskRepository.find({
-  //       where: {
-  //         user: { id: Number(userId) },
-  //         created_at: Between(start, end),
-  //       },
-  //       relations: { user: true },
-  //       order: { created_at: "ASC" }
-  //     });
-  //     if (tasks.length === 0) {
-  //       return res.status(200).json({ message: "Tasks not found" });
-  //     }
-  //     return res.json({ count: tasks.length, tasks });
-
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json({ message: "Failed to list tasks" });
-  //   }
-  // }
-  // async listTasksLastWeek(req: Request, res: Response) {
-  //   const { userId } = req.params;
-
-  //   const today = new Date();
-  //   const start = new Date();
-  //   start.setDate(today.getDate() - 7);
-  //   start.setHours(0, 0, 0, 0);
-  //   const end = new Date();
-
-  //   try {
-  //     const user = await userRepository.findOneBy({ id: Number(userId) });
-  //     if (!user) {
-  //       return res.status(404).json({ message: "User not found" });
-  //     }
-
-  //     const tasks = await taskRepository.find({
-  //       where: {
-  //         user: { id: Number(userId) },
-  //         created_at: Between(start, end),
-  //       },
-  //       relations: { user: true },
-  //       order: { created_at: "ASC" }
-  //     });
-  //     if (tasks.length === 0) {
-  //       return res.status(200).json({ message: "Tasks not found" });
-  //     }
-  //     return res.json({ count: tasks.length, tasks });
-
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json({ message: "Failed to list tasks" });
-  //   }
-  // }
-
-  // async listTasksPending(req: Request, res: Response) {
-  //   const { userId } = req.params;
-
-  //   try {
-  //     const user = await userRepository.findOneBy({ id: Number(userId) });
-  //     if (!user) {
-  //       return res.status(404).json({ message: "User not found" });
-  //     }
-
-  //     const tasks = await taskRepository.find({
-  //       where: {
-  //         user: { id: Number(userId) },
-  //         status: "pendente",
-  //       },
-  //       relations: { user: true },
-  //       order: { created_at: "ASC" }
-  //     });
-  //     if (tasks.length === 0) {
-  //       return res.status(200).json({ message: "Tasks not found" });
-  //     }
-  //     return res.json({ count: tasks.length, tasks });
-
-  //   } catch (error) {
-  //     console.log(error);
-  //     res.status(500).json({ message: "Failed to list tasks" });
-  //   }
-  // }
-
+      });
+      await taskRepository.save(task);
+      return res.status(201).json(task);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Failed to create task" });
+    }
+  }
 
   async updateTask(req: Request, res: Response) {
-    const { title, description, status, started_at, finished_at } = req.body;
     const { id } = req.params;
+    const { title, description, status } = req.body;
+
     try {
       const task = await taskRepository.findOneBy({ id: Number(id) });
-
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
-      task.title = String(title);
-      task.description = String(description);
-      task.status = String(status);
-      if (started_at) {
-        task.started_at = new Date(started_at);
+
+      if (title !== undefined) task.title = title;
+
+      if (description !== undefined) task.description = description;
+
+      if (status && status !== task.status) {
+        task.status = status;
+
+        if (status === 'em-andamento' && !task.started_at) {
+          task.started_at = new Date();
+        }
+
+        if (status === 'concluido' && !task.finished_at) {
+          task.finished_at = new Date();
+        }
+
+        if (status === 'pendente') {
+          task.started_at = null;
+          task.finished_at = null;
+        }
       }
-      task.finished_at = finished_at ? new Date(finished_at) : null;
+
       await taskRepository.save(task);
-      return res.status(200).json({ message: "Task updated successfully" });
+
+      return res.json({
+        success: true,
+        message: "Task updated successfully",
+        task
+      });
+
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Failed to update task" });
+      console.error("Erro ao atualizar tarefa:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update task"
+      });
     }
   }
 
@@ -248,15 +158,13 @@ export class TaskController {
     const { id } = req.params;
     try {
       const task = await taskRepository.findOneBy({ id: Number(id) });
-      if (!task) {
-        return res.status(404).json({ message: "Task not found" });
-      }
-      await taskRepository.update(id, { deleted_at: new Date() });
+      if (!task) return res.status(404).json({ message: "Task not found" });
+
       await taskRepository.softDelete(id);
-      return res.status(200).json({ message: "Task deleted successfully" });
+      return res.json({ message: "Task deleted successfully" });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Failed to delete task" });
+      console.error(error);
+      return res.status(500).json({ message: "Failed to delete task" });
     }
   }
 }

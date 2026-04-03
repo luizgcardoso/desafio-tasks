@@ -1,4 +1,3 @@
-// src/components/Header.tsx
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
@@ -11,7 +10,6 @@ export default function Header() {
     logout();
     navigate('/login');
   };
-
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 py-4 px-8">
       <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -21,10 +19,9 @@ export default function Header() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-800">To-Do List</h1>
-            <p className="text-xs text-gray-500 -mt-1">Gerencie suas tarefas</p>
+            <p className="text-xs text-gray-500 -mt-1">Gerenciamento de tarefas</p>
           </div>
         </div>
-
         {user && (
           <div className="flex items-center gap-4">
             <div className="text-right">

@@ -1,4 +1,3 @@
-// src/components/NewTaskForm.tsx
 import { useState } from 'react';
 
 interface NewTaskFormProps {
@@ -20,19 +19,18 @@ export default function NewTaskForm({
   setIsNewFormExpanded,
   onAddTask,
 }: NewTaskFormProps) {
-  const [error, setError] = useState('');
+  const [formError, setFormError] = useState('');
 
-  const handleSubmit = () => {
+  const handleCreate = () => {
     if (!newTitle.trim()) {
-      setError('O título da tarefa é obrigatório.');
+      setFormError('O título da tarefa é obrigatório.');
       return;
     }
     if (!newDescription.trim()) {
-      setError('A descrição da tarefa é obrigatória.');
+      setFormError('A descrição da tarefa é obrigatória.');
       return;
     }
-
-    setError('');
+    setFormError('');
     onAddTask();
   };
 
@@ -42,30 +40,33 @@ export default function NewTaskForm({
         onClick={() => setIsNewFormExpanded(!isNewFormExpanded)}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 transition"
       >
-        {isNewFormExpanded ? 'Fechar Formulário' : '➕ Nova Tarefa'}
+        {isNewFormExpanded ? 'Fechar Formulário' : 'Adicionar Nova Tarefa'}
       </button>
 
       {isNewFormExpanded && (
         <div className="mt-6 space-y-4">
-          <input
-            type="text"
-            placeholder="Título da tarefa *"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-
-          <textarea
-            placeholder="Descrição da tarefa *"
-            value={newDescription}
-            onChange={(e) => setNewDescription(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-y"
-          />
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
+          <div>
+            <input
+              type="text"
+              placeholder="Título da tarefa *"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <textarea
+              placeholder="Descrição da tarefa *"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 h-28 resize-y"
+            />
+          </div>
+          {formError && (
+            <p className="text-red-500 text-sm font-medium">{formError}</p>
+          )}
           <button
-            onClick={handleSubmit}
+            onClick={handleCreate}
             className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-2xl font-semibold transition"
           >
             Criar Tarefa
